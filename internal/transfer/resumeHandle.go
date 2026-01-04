@@ -65,21 +65,28 @@ func HandleResumeItem(key string, transferStruct *TransferStructure, chans *Chan
 	transferStruct.HandleStructures()
 
 	newBaseName := transferStruct.GetHash()
-	if err = helpers.EncodeTorrentFile(filepath.Join(transferStruct.Opts.QBitDir, newBaseName+".fastresume"), transferStruct.Fastresume); err != nil {
-		chans.ErrChannel <- fmt.Sprintf("Can't create qBittorrent fastresume file %v. With error: %v", filepath.Join(transferStruct.Opts.QBitDir, newBaseName+".fastresume"), err)
+	destDir := transferStruct.Opts.QBitDir
+	if transferStruct.IsPrivate() && transferStruct.Opts.PrivateQBitDir != "" {
+		destDir = transferStruct.Opts.PrivateQBitDir
+	}
+	if err = helpers.EncodeTorrentFile(filepath.Join(destDir, newBaseName+".fastresume"), transferStruct.Fastresume); err != nil {
+		chans.ErrChannel <- fmt.Sprintf("Can't create qBittorrent fastresume file %v. With error: %v", filepath.Join(destDir, newBaseName+".fastresume"), err)
 		return err
 	}
-	if err = helpers.CopyFile(transferStruct.TorrentFilePath, filepath.Join(transferStruct.Opts.QBitDir, newBaseName+".torrent")); err != nil {
-		chans.ErrChannel <- fmt.Sprintf("Can't create qBittorrent torrent file %v", filepath.Join(transferStruct.Opts.QBitDir, newBaseName+".torrent"))
+	if err = helpers.CopyFile(transferStruct.TorrentFilePath, filepath.Join(destDir, newBaseName+".torrent")); err != nil {
+		chans.ErrChannel <- fmt.Sprintf("Can't create qBittorrent torrent file %v", filepath.Join(destDir, newBaseName+".torrent"))
 		return err
 	}
-	chans.ComChannel <- fmt.Sprintf("Sucessfully imported %v", key)
+	chans.ComChannel <- ImportResult{
+		Message:   fmt.Sprintf("Sucessfully imported %v", key),
+		IsPrivate: transferStruct.IsPrivate(),
+	}
 	return nil
 }
 
 func HandleResumeItems(opts *options.Opts, resumeItems map[string]*utorrentStructs.ResumeItem) {
 	totalJobs := len(resumeItems)
-	chans := Channels{ComChannel: make(chan string, totalJobs),
+	chans := Channels{ComChannel: make(chan ImportResult, totalJobs),
 		ErrChannel:     make(chan string, totalJobs),
 		BoundedChannel: make(chan bool, runtime.GOMAXPROCS(0)*2)}
 	numJob := 1
@@ -114,14 +121,23 @@ func HandleResumeItems(opts *options.Opts, resumeItems map[string]*utorrentStruc
 		close(chans.ComChannel)
 		close(chans.ErrChannel)
 	}()
-	for message := range chans.ComChannel {
-		fmt.Printf("%v/%v %v \n", numJob, totalJobs, message)
+	var publicCount int
+	var privateCount int
+	var failedCount int
+	for result := range chans.ComChannel {
+		fmt.Printf("%v/%v %v \n", numJob, totalJobs, result.Message)
+		if result.IsPrivate {
+			privateCount++
+		} else {
+			publicCount++
+		}
 		numJob++
 	}
 	var wasErrors bool
 	for message := range chans.ErrChannel {
 		fmt.Printf("%v/%v %v \n", numJob, totalJobs, message)
 		wasErrors = true
+		failedCount++
 		numJob++
 	}
 	if opts.WithoutTags == false {
@@ -130,6 +146,7 @@ func HandleResumeItems(opts *options.Opts, resumeItems map[string]*utorrentStruc
 			fmt.Printf("Can't handle labels with error:\n%v\n", err)
 		}
 	}
+	fmt.Printf("Summary: public %v, private %v, failed %v of %v total\n", publicCount, privateCount, failedCount, totalJobs)
 	fmt.Println()
 	log.Println("Ended")
 	if wasErrors {

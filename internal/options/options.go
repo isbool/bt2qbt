@@ -14,15 +14,17 @@ import (
 )
 
 type Opts struct {
-	BitDir        string   `short:"s" long:"source" description:"Source directory that contains resume.dat and torrents files"`
-	QBitDir       string   `short:"d" long:"destination" description:"Destination directory BT_backup (as default)"`
-	Categories    string   `short:"c" long:"categories" description:"Path to qBittorrent categories.json file (for write tags)"`
-	WithoutLabels bool     `long:"without-labels" description:"Do not export/import labels"`
-	WithoutTags   bool     `long:"without-tags" description:"Do not export/import tags"`
-	SearchPaths   []string `short:"t" long:"search" description:"Additional search path for torrents files\n	Example: --search='/mnt/olddisk/savedtorrents' --search='/mnt/olddisk/workstorrents'"`
-	Replaces      []string `short:"r" long:"replace" description:"Replace save paths. Important: you have to use single slashes in paths\n	Delimiter for from/to is comma - ,\n	Example: -r \"D:/films,/home/user/films\" -r \"D:/music,/home/user/music\"\n"`
-	PathSeparator string   `long:"sep" description:"Default path separator that will use in all paths. You may need use this flag if you migrating from windows to linux in some cases"`
-	Version       bool     `short:"v" long:"version" description:"Show version"`
+	BitDir         string   `short:"s" long:"source" description:"Source directory that contains resume.dat and torrents files"`
+	QBitDir        string   `short:"d" long:"destination" description:"Destination directory BT_backup (as default)"`
+	PrivateQBitDir string   `long:"destination-private" description:"Destination directory BT_backup for private torrents (optional)"`
+	Categories     string   `short:"c" long:"categories" description:"Path to qBittorrent categories.json file (for write tags)"`
+	WithoutLabels  bool     `long:"without-labels" description:"Do not export/import labels"`
+	WithoutTags    bool     `long:"without-tags" description:"Do not export/import tags"`
+	SearchPaths    []string `short:"t" long:"search" description:"Additional search path for torrents files\n	Example: --search='/mnt/olddisk/savedtorrents' --search='/mnt/olddisk/workstorrents'"`
+	Replaces       []string `short:"r" long:"replace" description:"Replace save paths. Important: you have to use single slashes in paths\n	Delimiter for from/to is comma - ,\n	Example: -r \"D:/films,/home/user/films\" -r \"D:/music,/home/user/music\"\n"`
+	PathSeparator  string   `long:"sep" description:"Default path separator that will use in all paths. You may need use this flag if you migrating from windows to linux in some cases"`
+	Stats          bool     `long:"stats" description:"Show public/private/failed counts only (no conversion)"`
+	Version        bool     `short:"v" long:"version" description:"Show version"`
 }
 
 func PrepareOpts() *Opts {
@@ -95,8 +97,15 @@ func OptsCheck(opts *Opts) error {
 		return fmt.Errorf("can't find uTorrent\\Bittorrent folder")
 	}
 
-	if _, err := os.Stat(opts.QBitDir); os.IsNotExist(err) {
-		return fmt.Errorf("can't find qBittorrent folder")
+	if !opts.Stats {
+		if _, err := os.Stat(opts.QBitDir); os.IsNotExist(err) {
+			return fmt.Errorf("can't find qBittorrent folder")
+		}
+		if opts.PrivateQBitDir != "" {
+			if _, err := os.Stat(opts.PrivateQBitDir); os.IsNotExist(err) {
+				return fmt.Errorf("can't find qBittorrent folder for private torrents")
+			}
+		}
 	}
 
 	if runtime.GOOS == "linux" {

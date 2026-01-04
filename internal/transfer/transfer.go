@@ -139,6 +139,14 @@ func (transfer *TransferStructure) HandleTags() {
 		transfer.Fastresume.QbtTags = []string{}
 	}
 }
+
+func (transfer *TransferStructure) IsPrivate() bool {
+	if transfer.TorrentFile == nil || transfer.TorrentFile.Info == nil {
+		return false
+	}
+	return transfer.TorrentFile.Info.Private != 0
+}
+
 func (transfer *TransferStructure) HandleLabels() {
 	if transfer.Opts.WithoutLabels == false {
 		transfer.Fastresume.QBtCategory = helpers.HandleCesu8(transfer.ResumeItem.Label)

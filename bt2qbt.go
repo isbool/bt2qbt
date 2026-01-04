@@ -51,9 +51,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	color.Green("It will be performed processing from directory %v to directory %v\n", opts.BitDir, opts.QBitDir)
-	color.HiRed("Check that the qBittorrent is turned off and the directory %v and %v is backed up.\n",
-		opts.QBitDir, opts.Categories)
+	if opts.Stats {
+		stats := transfer.CollectStats(opts, resumeItems)
+		fmt.Printf("Stats: public %v, private %v, failed %v of %v total\n", stats.Public, stats.Private, stats.Failed, stats.Total)
+		return
+	}
+
+	if opts.PrivateQBitDir != "" {
+		color.Green("It will be performed processing from directory %v to directory %v (public) and %v (private)\n",
+			opts.BitDir, opts.QBitDir, opts.PrivateQBitDir)
+		color.HiRed("Check that the qBittorrent is turned off and the directory %v, %v and %v is backed up.\n",
+			opts.QBitDir, opts.PrivateQBitDir, opts.Categories)
+	} else {
+		color.Green("It will be performed processing from directory %v to directory %v\n", opts.BitDir, opts.QBitDir)
+		color.HiRed("Check that the qBittorrent is turned off and the directory %v and %v is backed up.\n",
+			opts.QBitDir, opts.Categories)
+	}
 	color.HiRed("Check that you previously disable option \"Append .!ut/.!bt to incomplete files\" in preferences of uTorrent/Bittorrent \n")
 	color.HiRed("Close uTorrent/Bittorrent and qBittorrent previously\n\n")
 	fmt.Println("Press Enter to start")

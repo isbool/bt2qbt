@@ -74,6 +74,8 @@ Application Options:
                         C:\Users\rumanzo\AppData\Roaming\uTorrent)
   -d, --destination=    Destination directory BT_backup (as default) (default:
                         C:\Users\rumanzo\AppData\Local\qBittorrent\BT_backup)
+      --destination-private=
+                        Destination directory BT_backup for private torrents (optional)
   -c, --categories=     Path to qBittorrent categories.json file (for write tags) (default:
                         C:\Users\rumanzo\AppData\Roaming\qBittorrent\categories.json)
       --without-labels  Do not export/import labels
@@ -86,6 +88,7 @@ Application Options:
 
       --sep=            Default path separator that will use in all paths. You may need use this flag if you migrating
                         from windows to linux in some cases (default: \)
+      --stats           Show public/private/failed counts only (no conversion)
   -v, --version         Show version
 
 ```
@@ -134,4 +137,16 @@ Started
 3233/3233 Sucessfully imported 3233.torrent
 
 Press Enter to exit
+```
+
+- Split private torrents into a separate destination folder
+
+```
+.\bt2qbt.exe -s C:\Users\user\AppData\Roaming\BitTorrent\ -d C:\Users\user\AppData\Local\qBittorrent\BT_backup\ --destination-private D:\qBittorrent\BT_backup_private\
+```
+
+- Show stats only (no conversion)
+
+```
+.\bt2qbt.exe -s C:\Users\user\AppData\Roaming\BitTorrent\ --stats
 ```

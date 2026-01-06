@@ -85,6 +85,10 @@ func HandleResumeItem(key string, transferStruct *TransferStructure, chans *Chan
 }
 
 func HandleResumeItems(opts *options.Opts, resumeItems map[string]*utorrentStructs.ResumeItem) {
+	if opts.Client == "deluge" {
+		HandleResumeItemsDeluge(opts, resumeItems)
+		return
+	}
 	totalJobs := len(resumeItems)
 	chans := Channels{ComChannel: make(chan ImportResult, totalJobs),
 		ErrChannel:     make(chan string, totalJobs),

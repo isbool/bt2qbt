@@ -17,6 +17,61 @@ type TestArgsCase struct {
 	expected *Opts
 }
 
+func mergeOpts(base, overlay *Opts) *Opts {
+	if overlay == nil {
+		return base
+	}
+	if overlay.Client != "" {
+		base.Client = overlay.Client
+	}
+	if overlay.BitDir != "" {
+		base.BitDir = overlay.BitDir
+	}
+	if overlay.QBitDir != "" {
+		base.QBitDir = overlay.QBitDir
+	}
+	if overlay.PrivateQBitDir != "" {
+		base.PrivateQBitDir = overlay.PrivateQBitDir
+	}
+	if overlay.Categories != "" {
+		base.Categories = overlay.Categories
+	}
+	if overlay.DelugeConfig != "" {
+		base.DelugeConfig = overlay.DelugeConfig
+	}
+	if overlay.DelugeStateDir != "" {
+		base.DelugeStateDir = overlay.DelugeStateDir
+	}
+	if overlay.DelugeLabels != "" {
+		base.DelugeLabels = overlay.DelugeLabels
+	}
+	if overlay.DelugePrivacy != "" {
+		base.DelugePrivacy = overlay.DelugePrivacy
+	}
+	if overlay.WithoutLabels {
+		base.WithoutLabels = true
+	}
+	if overlay.WithoutTags {
+		base.WithoutTags = true
+	}
+	if overlay.SearchPaths != nil {
+		base.SearchPaths = overlay.SearchPaths
+	}
+	if overlay.Replaces != nil {
+		base.Replaces = overlay.Replaces
+	}
+	if overlay.PathSeparator != "" {
+		base.PathSeparator = overlay.PathSeparator
+	}
+	if overlay.Stats {
+		base.Stats = true
+	}
+	if overlay.Version {
+		base.Version = true
+	}
+	return base
+}
+
 func TestOptionsArgs(t *testing.T) {
 	cases := []TestArgsCase{
 		{
@@ -87,12 +142,13 @@ func TestOptionsArgs(t *testing.T) {
 				}
 			}
 			if testCase.expected != nil {
-				if !reflect.DeepEqual(testCase.expected, opts) && !testCase.mustFail {
-					changes, err := diff.Diff(opts, testCase.expected, diff.DiscardComplexOrigin())
+				expected := mergeOpts(PrepareOpts(), testCase.expected)
+				if !reflect.DeepEqual(expected, opts) && !testCase.mustFail {
+					changes, err := diff.Diff(opts, expected, diff.DiscardComplexOrigin())
 					if err != nil {
 						t.Error(err.Error())
 					}
-					t.Fatalf("Unexpected error: opts isn't equoptions:\nGot: %#v\nExpect %#v\nDiff: %v\\n", opts, testCase.expected, spew.Sdump(changes))
+					t.Fatalf("Unexpected error: opts isn't equoptions:\nGot: %#v\nExpect %#v\nDiff: %v\\n", opts, expected, spew.Sdump(changes))
 				}
 			}
 		})
@@ -173,6 +229,15 @@ func TestOptionsHandle(t *testing.T) {
 			if testCase.opts.Categories == `` {
 				refOpts := PrepareOpts()
 				testCase.opts.Categories = refOpts.Categories
+			}
+			if testCase.opts.Client == "" {
+				testCase.opts.Client = "qbt"
+			}
+			if testCase.expected != nil && testCase.expected.Client == "" {
+				testCase.expected.Client = "qbt"
+			}
+			if testCase.expected != nil && testCase.expected.DelugePrivacy == "" {
+				testCase.expected.DelugePrivacy = "all"
 			}
 			HandleOpts(testCase.opts)
 			if testCase.expected != nil {

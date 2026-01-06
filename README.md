@@ -2,7 +2,7 @@
 
 # bt2qbt
 
-bt2qbt is cli tool for export from uTorrent\Bittorrent into qBittorrent (convert)
+bt2qbt is cli tool for export from uTorrent\Bittorrent into qBittorrent or Deluge (convert)
 > [!IMPORTANT]
 > Actual version tested with uTorrent 3.5.5 (build 46206) and qBittorrent 4.4.2. It should work with older version utorrent and newer version of qBittorrent, but it isn't tested.  
 
@@ -13,6 +13,12 @@ bt2qbt is cli tool for export from uTorrent\Bittorrent into qBittorrent (convert
 > [!IMPORTANT]
 > For new qBittorrent 5.X+ check that it use fastresume files before you migrate. Preferences -> Advanced -> Resume data storage type -> Fastresume files
 > 
+> [!IMPORTANT]
+> For Deluge (client = deluge), the tool writes to `torrents.state`, `torrents.fastresume`, and the `state/` folder. Make sure Deluge is closed and those files are backed up before migration.
+>
+> [!NOTE]
+> Deluge migration requires Python in PATH to update `torrents.state`. The tool tries `python3`, `python`, and `py -3`. You can also set `BT2QBT_PYTHON` to a full path.
+
 - [bt2qbt](#bt2qbt)
     - [Feature](#user-content-feature)
     - [Help](#user-content-help)
@@ -49,12 +55,15 @@ Feature:
 
 > [!NOTE]
 > \*\*\* Partially downloaded torrents will be visible as 100% completed, but in fact you will need to do a recheck (right click on torrent -> Force recheck). Without recheck torrents not will be valid. This is due to the fact that conversion of .dat files in which parts of objects are stored is not implemented.
+>
+> [!NOTE]
+> Deluge Label plugin supports a single label per torrent. For `--client=deluge` the tool uses the uTorrent label if present, otherwise the first tag.
 
 > [!IMPORTANT]
 > Before using `bt2qbt`, do not forget to **make backup** from:
 >    - bittorrent\utorrent data, 
->    - qbittorrent folder, and
->    - config %APPDATA%/Roaming/qBittorrent/qBittorrent.ini.
+>    - qbittorrent folder or deluge state folder, and
+>    - config %APPDATA%/Roaming/qBittorrent/qBittorrent.ini (qBittorrent) or %APPDATA%/deluge/label.conf (Deluge Label plugin).
 > Close both programs before making a copy!
 
 > [!IMPORTANT]
@@ -70,6 +79,7 @@ Usage:
   bt2qbt_v1.99_amd64.exe [OPTIONS]
 
 Application Options:
+      --client=         Target client: qbt (default) or deluge
   -s, --source=         Source directory that contains resume.dat and torrents files (default:
                         C:\Users\rumanzo\AppData\Roaming\uTorrent)
   -d, --destination=    Destination directory BT_backup (as default) (default:
@@ -78,6 +88,10 @@ Application Options:
                         Destination directory BT_backup for private torrents (optional)
   -c, --categories=     Path to qBittorrent categories.json file (for write tags) (default:
                         C:\Users\rumanzo\AppData\Roaming\qBittorrent\categories.json)
+      --deluge-config=  Deluge config directory (default depends on OS)
+      --deluge-state=   Deluge state directory (contains torrents.state/fastresume and .torrent files)
+      --deluge-labels=  Path to Deluge label.conf file (Label plugin)
+      --deluge-privacy= Deluge export filter: all (default), public, or private
       --without-labels  Do not export/import labels
       --without-tags    Do not export/import tags
   -t, --search=         Additional search path for torrents files
@@ -149,4 +163,28 @@ Press Enter to exit
 
 ```
 .\bt2qbt.exe -s C:\Users\user\AppData\Roaming\BitTorrent\ --stats
+```
+
+- Convert to Deluge (default config dir)
+
+```
+.\bt2qbt.exe --client deluge
+```
+
+- Convert to Deluge with custom config dir
+
+```
+.\bt2qbt.exe --client deluge --deluge-config C:\Users\user\AppData\Roaming\deluge
+```
+
+- Convert only public torrents to Deluge
+
+```
+.\bt2qbt.exe --client deluge --deluge-privacy public
+```
+
+- Convert only private torrents to a separate Deluge config
+
+```
+.\bt2qbt.exe --client deluge --deluge-privacy private --deluge-config C:\Users\user\AppData\Roaming\deluge_private
 ```

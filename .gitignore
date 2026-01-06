@@ -2,3 +2,5 @@
 .vscode
 bt2qbt_v*
 vendors
+/deluge-2.2.0
+/.gocache

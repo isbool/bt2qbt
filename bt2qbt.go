@@ -57,7 +57,15 @@ func main() {
 		return
 	}
 
-	if opts.PrivateQBitDir != "" {
+	if opts.Client == "deluge" {
+		color.Green("It will be performed processing from directory %v to Deluge state directory %v\n",
+			opts.BitDir, opts.DelugeStateDir)
+		color.HiRed("Check that Deluge is turned off and the directory %v is backed up.\n",
+			opts.DelugeStateDir)
+		if !opts.WithoutLabels || !opts.WithoutTags {
+			color.HiRed("Check that the label config %v is backed up.\n", opts.DelugeLabels)
+		}
+	} else if opts.PrivateQBitDir != "" {
 		color.Green("It will be performed processing from directory %v to directory %v (public) and %v (private)\n",
 			opts.BitDir, opts.QBitDir, opts.PrivateQBitDir)
 		color.HiRed("Check that the qBittorrent is turned off and the directory %v, %v and %v is backed up.\n",
@@ -68,7 +76,11 @@ func main() {
 			opts.QBitDir, opts.Categories)
 	}
 	color.HiRed("Check that you previously disable option \"Append .!ut/.!bt to incomplete files\" in preferences of uTorrent/Bittorrent \n")
-	color.HiRed("Close uTorrent/Bittorrent and qBittorrent previously\n\n")
+	if opts.Client == "deluge" {
+		color.HiRed("Close uTorrent/Bittorrent and Deluge previously\n\n")
+	} else {
+		color.HiRed("Close uTorrent/Bittorrent and qBittorrent previously\n\n")
+	}
 	fmt.Println("Press Enter to start")
 	fmt.Scanln()
 	log.Println("Started")
